@@ -12,10 +12,12 @@ def _build_network(features):
   feature_columns = [tf.feature_column.numeric_column(k)
                      for k in list(features)]
   input_layer = feature_column.input_layer(features, feature_columns)
-  fc1 = tf.layers.dense(inputs=input_layer, units=200,
+  fc1 = tf.layers.dense(inputs=input_layer, units=1024,
                         activation=tf.nn.relu, name='fc1')
-  fc2 = tf.layers.dense(inputs=fc1, units=1, name='fc2')
-  return tf.squeeze(fc2, [1])
+  fc2 = tf.layers.dense(inputs=fc1, units=512,
+                        activation=tf.nn.relu, name='fc2')
+  logits = tf.layers.dense(inputs=fc2, units=1, name='logits')
+  return tf.squeeze(logits, [1])
 
 def _build_train_op(loss, params):
   lr_decay_fn = functools.partial(
@@ -44,7 +46,7 @@ def _build_eval_metric_ops(labels, predictions):
 def _numer_model_fn(features, labels, mode, params):
   is_training = mode == ModeKeys.TRAIN
   logits = _build_network(features)
-  predictions = tf.cast(tf.nn.softmax(logits) > 0.5, tf.int64)
+  predictions = tf.cast(tf.nn.sigmoid(logits) > 0.5, tf.int64)
   loss = tf.losses.sigmoid_cross_entropy(labels, logits)
 
   return tf.estimator.EstimatorSpec(

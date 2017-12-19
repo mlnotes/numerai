@@ -35,8 +35,16 @@ def __experiment_fn(run_config, hparams):
       training_file='data/numerai_training_data.csv',
       eval_file='data/numerai_tournament_data.csv')
 
+  #feature_columns = [tf.feature_column.numeric_column(k)
+  #                   for k in feature_names]
+
   return tf.contrib.learn.Experiment(
       estimator=numer_estimator.NumerEstimator(run_config, hparams),
+    #  estimator=tf.estimator.DNNClassifier(
+    #      feature_columns=feature_columns,
+    #      hidden_units=[1024, 512, 256],
+    #      config=run_config,
+    #  ),
       train_input_fn=__build_train_input_fn(training_set, feature_names),
       eval_input_fn=__build_eval_input_fn(eval_set, feature_names),
       train_steps=10001)
