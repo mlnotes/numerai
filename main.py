@@ -13,19 +13,16 @@ def __process_data(training_file, eval_file):
 
 def __build_train_input_fn(data_set, feature_names):
   return tf.estimator.inputs.pandas_input_fn(
-      #x=pd.DataFrame({k: data_set[k].values for k in feature_names}),
       x=data_set[feature_names],
       y=data_set['target'],
-      #y=pd.Series(data_set['target'].values),
-      # y=pd.DataFrame(data_set['target'].values),
       num_epochs=None,
       shuffle=True)
 
 
 def __build_eval_input_fn(data_set, feature_names):
   return tf.estimator.inputs.pandas_input_fn(
-      x=pd.DataFrame({k: data_set[k].values for k in feature_names}),
-      y=pd.DataFrame(data_set['target'].values),
+      x=data_set[feature_names],
+      y=data_set['target'],
       num_epochs=1,
       shuffle=True)
 
@@ -34,6 +31,10 @@ def __experiment_fn(run_config, hparams):
   training_set, eval_set, feature_names = __process_data(
       training_file='data/numerai_training_data.csv',
       eval_file='data/numerai_tournament_data.csv')
+
+  validation_set = eval_set.loc[eval_set.data_type == 'validation']
+  test_set = eval_set.loc[eval_set.data_type == 'test']
+  live_set = eval_set.loc[eval_set.data_type == 'live']
 
   #feature_columns = [tf.feature_column.numeric_column(k)
   #                   for k in feature_names]
@@ -46,7 +47,7 @@ def __experiment_fn(run_config, hparams):
     #      config=run_config,
     #  ),
       train_input_fn=__build_train_input_fn(training_set, feature_names),
-      eval_input_fn=__build_eval_input_fn(eval_set, feature_names),
+      eval_input_fn=__build_eval_input_fn(validation_set, feature_names),
       train_steps=10001)
 
 
@@ -57,7 +58,7 @@ def main():
       save_checkpoints_steps=100)
 
   params = tf.contrib.training.HParams(
-      learning_rate=0.003)
+      learning_rate=0.0005)
 
   learn_runner.run(experiment_fn=__experiment_fn,
                    run_config=config,

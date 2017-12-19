@@ -17,7 +17,8 @@ def _build_network(features):
   fc2 = tf.layers.dense(inputs=fc1, units=512,
                         activation=tf.nn.relu, name='fc2')
   logits = tf.layers.dense(inputs=fc2, units=1, name='logits')
-  return tf.squeeze(logits, [1])
+  #return tf.squeeze(logits, [1])
+  return logits
 
 def _build_train_op(loss, params):
   lr_decay_fn = functools.partial(
@@ -28,7 +29,7 @@ def _build_train_op(loss, params):
 
   return tf.contrib.layers.optimize_loss(
       loss=loss,
-      global_step=tf.contrib.framework.get_global_step(),
+      global_step=tf.train.get_global_step(),
       optimizer=tf.train.AdamOptimizer,
       learning_rate=params.learning_rate,
       learning_rate_decay_fn=lr_decay_fn)
@@ -43,8 +44,14 @@ def _build_eval_metric_ops(labels, predictions):
   }
 
 
+def _maybe_expand_dims(tensor):
+  if isinstance(tensor, tf.Tensor) and tensor.get_shape().ndims == 1:
+    tensor = tf.expand_dims(tensor, -1)
+  return tensor
+
 def _numer_model_fn(features, labels, mode, params):
   is_training = mode == ModeKeys.TRAIN
+  labels = _maybe_expand_dims(labels)
   logits = _build_network(features)
   predictions = tf.cast(tf.nn.sigmoid(logits) > 0.5, tf.int64)
   loss = tf.losses.sigmoid_cross_entropy(labels, logits)
