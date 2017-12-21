@@ -34,7 +34,7 @@ def _experiment_fn(run_config, hparams):
       training_file=('/usr/local/google/home/hanfeng/Desktop/tensorflow/'
                      'numerai/data/numerai_training_data.csv'),
       eval_file=('/usr/local/google/home/hanfeng/Desktop/tensorflow/'
-                 'numerai/data/numerai_tournament_data.csv'))
+                 'numerai/data/numerai_tournament_data.csv.bak'))
 
   validation_set = eval_set.loc[eval_set.data_type == 'validation']
   # test_set = eval_set.loc[eval_set.data_type == 'test']

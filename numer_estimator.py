@@ -48,18 +48,30 @@ def _maybe_expand_dims(tensor):
 
 
 def _numer_model_fn(features, labels, mode, params):
-  is_training = mode == tf.estimator.ModeKeys.TRAIN
   labels = _maybe_expand_dims(labels)
   logits = _build_network(features)
   predictions = tf.cast(tf.nn.sigmoid(logits) > 0.5, tf.int64)
-  loss = tf.losses.sigmoid_cross_entropy(labels, logits)
+
+  loss = None
+  train_op = None
+  eval_metric_ops = None
+  if (mode == tf.estimator.ModeKeys.TRAIN or
+      mode == tf.estimator.ModeKeys.EVAL):
+    loss = tf.losses.sigmoid_cross_entropy(labels, logits)
+    eval_metric_ops = _build_eval_metric_ops(labels, predictions)
+
+  if mode == tf.estimator.ModeKeys.TRAIN:
+    train_op = _build_train_op(loss, params)
+
+  if mode == tf.estimator.ModeKeys.PREDICT:
+    predictions = tf.nn.sigmoid(logits)
 
   return tf.estimator.EstimatorSpec(
       mode=mode,
       predictions=predictions,
       loss=loss,
-      train_op=_build_train_op(loss, params),
-      eval_metric_ops=_build_eval_metric_ops(labels, predictions))
+      train_op=train_op,
+      eval_metric_ops=eval_metric_ops)
 
 
 class NumerEstimator(tf.estimator.Estimator):
